@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>星星捕手</title>
+<style>
+:root { color-scheme:dark; font-family:system-ui,"Microsoft JhengHei",sans-serif; }
+* { box-sizing:border-box; }
+body { margin:0; color:#f6f3ff; background:#101025; }
+main { width:min(92vw,46rem); margin:2rem auto; }
+h1 { margin:.25rem 0; font-size:clamp(2rem,8vw,3.5rem); }
+p { line-height:1.55; }
+.tag { color:#fce36d; font-weight:700; }
+.stats { display:flex; gap:1.5rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.field { position:relative; height:clamp(15rem,47dvh,25rem); border:2px solid #8171d6; border-radius:1.1rem;
+  background:radial-gradient(circle at 24% 65%,#302057,transparent 65%),#181738; overflow:hidden; }
+button { color:#17152a; background:#fce36d; font:inherit; font-weight:800; border:0; cursor:pointer; }
+button:focus-visible { outline:3px solid #bfffe0; outline-offset:2px; }
+#start { border-radius:.65rem; padding:.7rem 1.15rem; min-height:3rem; }
+#star { position:absolute; width:3.5rem; height:3.5rem; border-radius:50%; font-size:2rem; line-height:1;
+  touch-action:manipulation; }
+#message { min-height:1.7rem; }
+</style>
+</head>
+<body>
+<main>
+  <p class="tag">Gemini Canvas 課堂範例</p>
+  <h1>星星捕手</h1>
+  <p>20 秒內點擊星星，每點中一次加 1 分。</p>
+  <div class="stats"><p>時間 <span id="time">20</span> 秒</p><p>分數 <span id="score">0</span></p></div>
+  <div class="field" id="field" aria-label="遊戲區">
+    <button type="button" id="star" aria-label="捕捉星星" hidden>★</button>
+  </div>
+  <p id="message" role="status">準備好了嗎？</p>
+  <button type="button" id="start">開始遊戲</button>
+</main>
+<script>
+const ROUND_SECONDS = 20;
+const field = document.querySelector('#field');
+const star = document.querySelector('#star');
+const start = document.querySelector('#start');
+const time = document.querySelector('#time');
+const score = document.querySelector('#score');
+const message = document.querySelector('#message');
+let points = 0;
+let endsAt = 0;
+let interval = null;
+
+function moveStar() {
+  const maxX = Math.max(0, field.clientWidth - star.offsetWidth - 8);
+  const maxY = Math.max(0, field.clientHeight - star.offsetHeight - 8);
+  star.style.left = (4 + Math.random() * maxX) + 'px';
+  star.style.top = (4 + Math.random() * maxY) + 'px';
+}
+
+function updateTime() {
+  const remaining = Math.max(0, Math.ceil((endsAt - performance.now()) / 1000));
+  time.textContent = remaining;
+  if (remaining === 0) {
+    clearInterval(interval);
+    interval = null;
+    star.hidden = true;
+    message.textContent = '時間到！本局總分 ' + points + ' 分。';
+    start.textContent = '再玩一次';
+    start.hidden = false;
+    start.focus();
+  }
+}
+
+start.addEventListener('click', () => {
+  if (interval !== null) return;
+  points = 0;
+  score.textContent = points;
+  time.textContent = ROUND_SECONDS;
+  endsAt = performance.now() + ROUND_SECONDS * 1000;
+  start.hidden = true;
+  star.hidden = false;
+  message.textContent = '快點星星！';
+  moveStar();
+  star.focus();
+  interval = setInterval(updateTime, 100);
+});
+
+star.addEventListener('click', () => {
+  if (interval === null) return;
+  if (performance.now() >= endsAt) {
+    updateTime();
+    return;
+  }
+  points += 1;
+  score.textContent = points;
+  moveStar();
+});
+
+window.addEventListener('resize', () => {
+  if (interval !== null) moveStar();
+});
+</script>
+</body>
+</html>
